@@ -1,0 +1,7 @@
+target
+.idea
+*.iws
+*.ipr
+*.iml
+build
+generated-sources
