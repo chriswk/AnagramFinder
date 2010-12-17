@@ -1,6 +1,8 @@
 package com.chriswk;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.text.Collator;
 import java.util.*;
 
@@ -11,6 +13,8 @@ public class AnagramFinder {
 
     private static final Locale norwegianLocale = new Locale("Norway", "no");
     private static final Collator norwegianCollator = Collator.getInstance(norwegianLocale);
+    private static final String utf8Encoding = "UTF-8";
+
     public AnagramFinder() {
     }
 
@@ -23,97 +27,84 @@ public class AnagramFinder {
     }
 
     public void findAnagrams() {
-        File eventyrFile = new File(ClassLoader.getSystemResource("eventyr.txt").getFile());
-        File dictionary = new File(ClassLoader.getSystemResource("thesaurus.txt").getFile());
-        List<String> inputWordList = buildWordList(eventyrFile);
-        Map<String, SortedSet<String>> candidateMap = buildCandidateMap(dictionary);
-        printAnagrams(inputWordList, candidateMap);
-
-    }
-
-    private List<String> buildWordList(File inputFile) {
-        List<String> wordList = new ArrayList<String>();
-        InputStreamReader isr = null;
+        InputStreamReader eventyrStream = null;
+        InputStreamReader dictionaryStream = null;
         try {
-            isr = new InputStreamReader(new FileInputStream(inputFile), "UTF-8");
-            Scanner scanner = new Scanner(isr);
-            while (scanner.hasNextLine()) {
-                String word = scanner.nextLine();
-                wordList.add(word);
-            }
-        } catch (FileNotFoundException fnfe) {
-            System.err.println("Could not find file");
-        } catch (IOException ioEx) {
-            System.err.println("IOexception while building work map");
+            eventyrStream = new InputStreamReader(getClass().getResourceAsStream("/eventyr.txt"), "UTF-8");
+            dictionaryStream = new InputStreamReader(getClass().getResourceAsStream("/thesaurus.txt"), "UTF-8");
+            List<String> inputWordList = buildWordList(eventyrStream);
+            Map<String, SortedSet<String>> candidateMap = buildCandidateMap(dictionaryStream);
+            printAnagrams(inputWordList, candidateMap);
+        } catch (UnsupportedEncodingException unSupp) {
+            System.err.println("Unsupported encoding");
         } finally {
             try {
-                if (isr != null) {
-                    isr.close();
+                if (eventyrStream != null) {
+                    eventyrStream.close();
+                }
+                if (dictionaryStream != null) {
+                    dictionaryStream.close();
                 }
             } catch (IOException ioEx) {
-                System.err.println("Couldn't close the InputStream");
+                System.err.println("IOException while closing files");
             }
         }
+    }
+
+    private List<String> buildWordList(InputStreamReader wordListStream) {
+        List<String> wordList = new ArrayList<String>();
+        Scanner scanner = new Scanner(wordListStream);
+        while (scanner.hasNextLine()) {
+            String word = scanner.nextLine();
+            wordList.add(word);
+        }
+
         Collections.sort(wordList, norwegianCollator);
         return wordList;
     }
 
-    private Map<String, SortedSet<String>> buildCandidateMap(File dictionary) {
+    private Map<String, SortedSet<String>> buildCandidateMap(InputStreamReader dictionaryStream) {
         Map<String, SortedSet<String>> candidateMap = new HashMap<String, SortedSet<String>>();
-        InputStreamReader isr = null;
-        try {
-            isr = new InputStreamReader(new FileInputStream(dictionary), "UTF-8");
-            Scanner scanner = new Scanner(isr);
-            while (scanner.hasNextLine()) {
-                String word = scanner.nextLine().toLowerCase(norwegianLocale);
-                String normalizedWord;
-                if (word.length() > 1) {
-                    normalizedWord = normalizeWord(word);
-                } else {
-                    normalizedWord = word;
-                }
-                if (candidateMap.containsKey(normalizedWord)) {
-                    SortedSet<String> currentAnagramSet = candidateMap.get(normalizedWord);
-                    if (!currentAnagramSet.contains(word)) {
-                        currentAnagramSet.add(word);
-                    }
-                } else {
-                    SortedSet<String> anagramSet = new TreeSet<String>(norwegianCollator);
-                    anagramSet.add(word);
-                    candidateMap.put(normalizedWord, anagramSet);
-                }
+        Scanner scanner = new Scanner(dictionaryStream);
+        while (scanner.hasNextLine()) {
+            String word = scanner.nextLine().toLowerCase(norwegianLocale);
+            String normalizedWord;
+            if (word.length() > 1) {
+                normalizedWord = normalizeWord(word);
+            } else {
+                normalizedWord = word;
             }
-
-        } catch (FileNotFoundException fnfe) {
-            System.err.println("Could not find file");
-        } catch (IOException ioEx) {
-            System.err.println("IOexception while building work map");
-        } finally {
-            try {
-                if (isr != null) {
-                    isr.close();
+            if (candidateMap.containsKey(normalizedWord)) {
+                SortedSet<String> currentAnagramSet = candidateMap.get(normalizedWord);
+                if (!currentAnagramSet.contains(word)) {
+                    currentAnagramSet.add(word);
                 }
-            } catch (IOException ioEx) {
-                System.err.println("Couldn't close the InputStream");
+            } else {
+                SortedSet<String> anagramSet = new TreeSet<String>(norwegianCollator);
+                anagramSet.add(word);
+                candidateMap.put(normalizedWord, anagramSet);
             }
         }
+
         return candidateMap;
     }
 
     private void printAnagrams(List<String> inputWordList, Map<String, SortedSet<String>> dictionary) {
-        for(String word : inputWordList) {
+        for (String word : inputWordList) {
             //No point in checking for anagrams for words of length 1
             StringBuilder anagramOutput = new StringBuilder(word);
-            if(word.length() > 1) {
+            if (word.length() > 1) {
                 String normalizedWord = normalizeWord(word);
-               if(dictionary.containsKey(normalizedWord)) {
+                if (dictionary.containsKey(normalizedWord)) {
                     anagramOutput.append(" -");
                     SortedSet<String> anagrams = dictionary.get(normalizedWord);
-                    for(String anagram : anagrams) {
-                        anagramOutput.append(" ")
-                        .append(anagram);
+                    for (String anagram : anagrams) {
+                        if (!anagram.equals(word)) {
+                            anagramOutput.append(" ")
+                                    .append(anagram);
+                        }
                     }
-                   System.out.println(anagramOutput.toString());
+                    System.out.println(anagramOutput.toString());
                 }
             }
 
