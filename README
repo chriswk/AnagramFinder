@@ -1,1 +1,2 @@
-This file was created by IntelliJ IDEA 10.0 for binding GitHub repository
+ * Finds anagrams for each word in the eventyr.txt in the src/main/resources folder
+ * Uses thesaurus.txt as it's anagram dictionary
