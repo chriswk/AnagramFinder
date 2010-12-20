@@ -30,8 +30,8 @@ public class AnagramFinder {
         InputStreamReader eventyrStream = null;
         InputStreamReader dictionaryStream = null;
         try {
-            eventyrStream = new InputStreamReader(getClass().getResourceAsStream("/eventyr.txt"), "UTF-8");
-            dictionaryStream = new InputStreamReader(getClass().getResourceAsStream("/thesaurus.txt"), "UTF-8");
+            eventyrStream = new InputStreamReader(getClass().getResourceAsStream("/eventyr.txt"), utf8Encoding);
+            dictionaryStream = new InputStreamReader(getClass().getResourceAsStream("/thesaurus.txt"), utf8Encoding);
             List<String> inputWordList = buildWordList(eventyrStream);
             Map<String, SortedSet<String>> candidateMap = buildCandidateMap(dictionaryStream);
             printAnagrams(inputWordList, candidateMap);
